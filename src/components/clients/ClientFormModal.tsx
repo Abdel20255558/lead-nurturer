@@ -146,9 +146,9 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
             {/* Type société */}
             <div className="space-y-2">
               <Label>Type de société</Label>
-              <Select
-                value={watch('company_type') || ''}
-                onValueChange={(v) => setValue('company_type', v as CompanyType)}
+            <Select
+              value={watch('company_type') || undefined}
+              onValueChange={(v) => setValue('company_type', v as CompanyType)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner..." />
@@ -227,7 +227,7 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
                   <div className="space-y-2">
                     <Label>Méthode d'offre</Label>
                     <Select
-                      value={watch('contact_method') || ''}
+                      value={watch('contact_method') || undefined}
                       onValueChange={(v) => setValue('contact_method', v as ContactMethod)}
                     >
                       <SelectTrigger>
@@ -255,7 +255,7 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
                   <div className="space-y-2">
                     <Label>Résultat du contact</Label>
                     <Select
-                      value={watch('contact_result') || ''}
+                      value={watch('contact_result') || undefined}
                       onValueChange={(v) => setValue('contact_result', v as ContactResult)}
                     >
                       <SelectTrigger>
