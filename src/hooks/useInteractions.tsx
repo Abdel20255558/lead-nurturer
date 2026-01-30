@@ -59,9 +59,52 @@ export function useInteractions(clientId?: string) {
     },
   });
 
+  const updateInteraction = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<InteractionFormData> }) => {
+      const { data: updated, error } = await supabase
+        .from('interactions')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return updated;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['interactions'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      toast({ title: 'Interaction mise à jour' });
+    },
+    onError: (error) => {
+      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const deleteInteraction = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('interactions')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['interactions'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      toast({ title: 'Interaction supprimée' });
+    },
+    onError: (error) => {
+      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    },
+  });
+
   return {
     interactions,
     isLoading,
     createInteraction,
+    updateInteraction,
+    deleteInteraction,
   };
 }
