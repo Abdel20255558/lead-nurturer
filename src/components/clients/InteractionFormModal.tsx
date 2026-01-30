@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
-import { MessageSquare } from 'lucide-react';
+import { fr } from 'date-fns/locale';
+import { MessageSquare, CalendarIcon } from 'lucide-react';
 import { useInteractions } from '@/hooks/useInteractions';
+import { useClients } from '@/hooks/useClients';
 import { InteractionType, INTERACTION_TYPE_LABELS } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,12 +14,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 const interactionSchema = z.object({
   type: z.enum(['call', 'email', 'reels', 'visit', 'other']),
   date_time: z.string(),
   summary: z.string().optional(),
   next_step: z.string().optional(),
+  next_follow_up_date: z.date().optional(),
 });
 
 type InteractionFormData = z.infer<typeof interactionSchema>;
@@ -29,6 +36,8 @@ interface InteractionFormModalProps {
 
 export function InteractionFormModal({ isOpen, onClose, clientId }: InteractionFormModalProps) {
   const { createInteraction } = useInteractions(clientId);
+  const { updateClient } = useClients();
+  const [followUpDate, setFollowUpDate] = useState<Date | undefined>(undefined);
 
   const { register, handleSubmit, watch, setValue, formState: { errors }, reset } = useForm<InteractionFormData>({
     resolver: zodResolver(interactionSchema),
@@ -40,11 +49,13 @@ export function InteractionFormModal({ isOpen, onClose, clientId }: InteractionF
 
   const handleClose = () => {
     reset();
+    setFollowUpDate(undefined);
     onClose();
   };
 
   const onSubmit = async (data: InteractionFormData) => {
     try {
+      // Create the interaction
       await createInteraction.mutateAsync({
         type: data.type,
         summary: data.summary,
@@ -52,6 +63,21 @@ export function InteractionFormModal({ isOpen, onClose, clientId }: InteractionF
         client_id: clientId,
         date_time: new Date(data.date_time).toISOString(),
       });
+
+      // Update client status to "in_progress" and set next_follow_up_at if date is selected
+      const updateData: { status: 'in_progress'; next_follow_up_at?: string } = {
+        status: 'in_progress',
+      };
+
+      if (followUpDate) {
+        updateData.next_follow_up_at = followUpDate.toISOString();
+      }
+
+      await updateClient.mutateAsync({
+        id: clientId,
+        data: updateData,
+      });
+
       handleClose();
     } catch (error) {
       console.error(error);
@@ -120,11 +146,43 @@ export function InteractionFormModal({ isOpen, onClose, clientId }: InteractionF
             />
           </div>
 
+          {/* Next Follow-up Date */}
+          <div className="space-y-2">
+            <Label>Date de prochaine relance</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !followUpDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {followUpDate ? format(followUpDate, "PPP", { locale: fr }) : "Choisir une date..."}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={followUpDate}
+                  onSelect={setFollowUpDate}
+                  initialFocus
+                  disabled={(date) => date < new Date()}
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+            <p className="text-xs text-muted-foreground">
+              Le statut du client passera automatiquement à "En cours"
+            </p>
+          </div>
+
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={handleClose}>
               Annuler
             </Button>
-            <Button type="submit" disabled={createInteraction.isPending}>
+            <Button type="submit" disabled={createInteraction.isPending || updateClient.isPending}>
               Ajouter
             </Button>
           </div>
