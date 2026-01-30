@@ -184,12 +184,12 @@ export function ClientsTable() {
 
           {/* Activity Filter */}
           {activities.length > 0 && (
-            <Select value={activityFilter} onValueChange={setActivityFilter}>
+            <Select value={activityFilter || "all"} onValueChange={(v) => setActivityFilter(v === "all" ? "" : v)}>
               <SelectTrigger className="w-44">
                 <SelectValue placeholder="Activité" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Toutes activités</SelectItem>
+                <SelectItem value="all">Toutes activités</SelectItem>
                 {activities.map(activity => (
                   <SelectItem key={activity} value={activity}>{activity}</SelectItem>
                 ))}
