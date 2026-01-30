@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -42,26 +42,40 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
   const { createClient, updateClient } = useClients();
   const isEditing = !!client;
 
+  const getDefaultValues = (): Partial<ClientFormData> => {
+    if (client) {
+      return {
+        name: client.name,
+        address: client.address || '',
+        activity: client.activity || '',
+        email: client.email || '',
+        website: client.website || '',
+        phone_fixed: client.phone_fixed || '',
+        phone_mobile: client.phone_mobile || '',
+        company_type: client.company_type,
+        status: client.status,
+        notes: client.notes || '',
+        contact_method: client.contact_method,
+        offer_sent_date: client.offer_sent_date || '',
+        contact_result: client.contact_result,
+      };
+    }
+    return {
+      status: 'not_contacted',
+    };
+  };
+
   const { register, handleSubmit, watch, setValue, formState: { errors }, reset } = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
-    defaultValues: client ? {
-      name: client.name,
-      address: client.address || '',
-      activity: client.activity || '',
-      email: client.email || '',
-      website: client.website || '',
-      phone_fixed: client.phone_fixed || '',
-      phone_mobile: client.phone_mobile || '',
-      company_type: client.company_type,
-      status: client.status,
-      notes: client.notes || '',
-      contact_method: client.contact_method,
-      offer_sent_date: client.offer_sent_date || '',
-      contact_result: client.contact_result,
-    } : {
-      status: 'not_contacted',
-    },
+    defaultValues: getDefaultValues(),
   });
+
+  // Reset form when client changes (for edit mode)
+  React.useEffect(() => {
+    if (isOpen) {
+      reset(getDefaultValues());
+    }
+  }, [isOpen, client?.id]);
 
   const status = watch('status');
   const contactResult = watch('contact_result');
