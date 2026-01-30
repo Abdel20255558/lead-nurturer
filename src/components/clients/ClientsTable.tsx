@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Search, Filter, Plus, MoreHorizontal, Phone, Mail, Globe, ArrowUpDown, X, Trash2, Edit, Eye } from 'lucide-react';
+import { Search, Filter, Plus, MoreHorizontal, Phone, Mail, Globe, ArrowUpDown, X, Trash2, Edit, Eye, Upload } from 'lucide-react';
 import { useClients } from '@/hooks/useClients';
 import { Client, ClientStatus, STATUS_LABELS, CONTACT_METHOD_LABELS } from '@/types/database';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ClientFormModal } from './ClientFormModal';
 import { ClientDetailModal } from './ClientDetailModal';
+import { ImportClientsModal } from './ImportClientsModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 type SortField = 'name' | 'created_at' | 'last_action_at' | 'next_follow_up_at';
@@ -29,6 +30,7 @@ export function ClientsTable() {
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   const [clientToReject, setClientToReject] = useState<Client | null>(null);
@@ -205,10 +207,16 @@ export function ClientsTable() {
           )}
         </div>
 
-        <Button onClick={() => { setSelectedClient(null); setIsFormOpen(true); }}>
-          <Plus className="h-4 w-4 mr-2" />
-          Ajouter
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+            <Upload className="h-4 w-4 mr-2" />
+            Importer
+          </Button>
+          <Button onClick={() => { setSelectedClient(null); setIsFormOpen(true); }}>
+            <Plus className="h-4 w-4 mr-2" />
+            Ajouter
+          </Button>
+        </div>
       </div>
 
       {/* Table */}
@@ -406,6 +414,12 @@ export function ClientsTable() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Import Modal */}
+      <ImportClientsModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+      />
     </div>
   );
 }

@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { motion } from 'framer-motion';
-import { Building2, Mail, Phone, Globe, MapPin, Calendar, Clock, MessageSquare, Plus, Edit, X } from 'lucide-react';
-import { Client, STATUS_LABELS, CONTACT_METHOD_LABELS, CONTACT_RESULT_LABELS, INTERACTION_TYPE_LABELS, InteractionType } from '@/types/database';
+import { Building2, Mail, Phone, Globe, MapPin, Clock, MessageSquare, Plus, Edit, Trash2, MoreHorizontal } from 'lucide-react';
+import { Client, Interaction, STATUS_LABELS, CONTACT_METHOD_LABELS, CONTACT_RESULT_LABELS, INTERACTION_TYPE_LABELS, InteractionType } from '@/types/database';
 import { useInteractions } from '@/hooks/useInteractions';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { InteractionFormModal } from './InteractionFormModal';
 
 interface ClientDetailModalProps {
@@ -22,7 +24,9 @@ interface ClientDetailModalProps {
 
 export function ClientDetailModal({ isOpen, onClose, client, onEdit }: ClientDetailModalProps) {
   const [isInteractionFormOpen, setIsInteractionFormOpen] = useState(false);
-  const { interactions, isLoading: interactionsLoading } = useInteractions(client?.id);
+  const [selectedInteraction, setSelectedInteraction] = useState<Interaction | null>(null);
+  const [interactionToDelete, setInteractionToDelete] = useState<Interaction | null>(null);
+  const { interactions, isLoading: interactionsLoading, deleteInteraction } = useInteractions(client?.id);
 
   if (!client) return null;
 
@@ -50,6 +54,28 @@ export function ClientDetailModal({ isOpen, onClose, client, onEdit }: ClientDet
       case 'email': return Mail;
       default: return MessageSquare;
     }
+  };
+
+  const handleEditInteraction = (interaction: Interaction) => {
+    setSelectedInteraction(interaction);
+    setIsInteractionFormOpen(true);
+  };
+
+  const handleAddInteraction = () => {
+    setSelectedInteraction(null);
+    setIsInteractionFormOpen(true);
+  };
+
+  const handleDeleteInteraction = async () => {
+    if (interactionToDelete) {
+      await deleteInteraction.mutateAsync(interactionToDelete.id);
+      setInteractionToDelete(null);
+    }
+  };
+
+  const handleCloseInteractionForm = () => {
+    setIsInteractionFormOpen(false);
+    setSelectedInteraction(null);
   };
 
   return (
@@ -229,7 +255,7 @@ export function ClientDetailModal({ isOpen, onClose, client, onEdit }: ClientDet
                 <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                   Historique des interactions
                 </h3>
-                <Button size="sm" onClick={() => setIsInteractionFormOpen(true)}>
+                <Button size="sm" onClick={handleAddInteraction}>
                   <Plus className="h-4 w-4 mr-1" />
                   Ajouter
                 </Button>
@@ -249,7 +275,7 @@ export function ClientDetailModal({ isOpen, onClose, client, onEdit }: ClientDet
                     variant="outline"
                     size="sm"
                     className="mt-4"
-                    onClick={() => setIsInteractionFormOpen(true)}
+                    onClick={handleAddInteraction}
                   >
                     <Plus className="h-4 w-4 mr-1" />
                     Ajouter une interaction
@@ -275,9 +301,31 @@ export function ClientDetailModal({ isOpen, onClose, client, onEdit }: ClientDet
                             <Badge variant="outline">
                               {INTERACTION_TYPE_LABELS[interaction.type]}
                             </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {format(new Date(interaction.date_time), "dd MMM yyyy 'à' HH:mm", { locale: fr })}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">
+                                {format(new Date(interaction.date_time), "dd MMM yyyy 'à' HH:mm", { locale: fr })}
+                              </span>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-6 w-6">
+                                    <MoreHorizontal className="h-3 w-3" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleEditInteraction(interaction)}>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Modifier
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() => setInteractionToDelete(interaction)}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Supprimer
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
                           </div>
                           {interaction.summary && (
                             <p className="text-sm mb-2">{interaction.summary}</p>
@@ -301,9 +349,28 @@ export function ClientDetailModal({ isOpen, onClose, client, onEdit }: ClientDet
 
       <InteractionFormModal
         isOpen={isInteractionFormOpen}
-        onClose={() => setIsInteractionFormOpen(false)}
+        onClose={handleCloseInteractionForm}
         clientId={client.id}
+        interaction={selectedInteraction}
       />
+
+      {/* Delete Interaction Confirmation */}
+      <AlertDialog open={!!interactionToDelete} onOpenChange={() => setInteractionToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer l'interaction ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. L'interaction sera définitivement supprimée.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteInteraction} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
