@@ -16,6 +16,8 @@ import { ClientFormModal } from './ClientFormModal';
 import { ClientDetailModal } from './ClientDetailModal';
 import { ImportClientsModal } from './ImportClientsModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { toast } from 'sonner';
 
 type SortField = 'name' | 'created_at' | 'last_action_at' | 'next_follow_up_at';
 type SortOrder = 'asc' | 'desc';
@@ -299,23 +301,66 @@ export function ClientsTable() {
                     <TableCell className="font-medium">{client.name}</TableCell>
                     <TableCell className="text-muted-foreground">{client.activity || '-'}</TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
-                        {client.phone_mobile && (
-                          <a href={`tel:${client.phone_mobile}`} onClick={(e) => e.stopPropagation()}>
-                            <Phone className="h-4 w-4 text-muted-foreground hover:text-primary" />
-                          </a>
-                        )}
-                        {client.email && (
-                          <a href={`mailto:${client.email}`} onClick={(e) => e.stopPropagation()}>
-                            <Mail className="h-4 w-4 text-muted-foreground hover:text-primary" />
-                          </a>
-                        )}
-                        {client.website && (
-                          <a href={client.website} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
-                            <Globe className="h-4 w-4 text-muted-foreground hover:text-primary" />
-                          </a>
-                        )}
-                      </div>
+                      <TooltipProvider>
+                        <div className="flex gap-2">
+                          {client.phone_fixed && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigator.clipboard.writeText(client.phone_fixed!);
+                                    toast.success('Téléphone fixe copié');
+                                  }}
+                                  className="hover:text-primary transition-colors"
+                                >
+                                  <Phone className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{client.phone_fixed}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                          {client.email && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigator.clipboard.writeText(client.email!);
+                                    toast.success('Email copié');
+                                  }}
+                                  className="hover:text-primary transition-colors"
+                                >
+                                  <Mail className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{client.email}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                          {client.website && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <a
+                                  href={client.website.startsWith('http') ? client.website : `https://${client.website}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="hover:text-primary transition-colors"
+                                >
+                                  <Globe className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                                </a>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{client.website}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
+                      </TooltipProvider>
                     </TableCell>
                     <TableCell>{getStatusBadge(client.status)}</TableCell>
                     <TableCell>
