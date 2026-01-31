@@ -26,7 +26,7 @@ export function ClientsTable() {
   const [statusFilter, setStatusFilter] = useState<ClientStatus | 'all' | 'to_follow_up'>('all');
   const [activityFilter, setActivityFilter] = useState('');
   const [sortField, setSortField] = useState<SortField>('created_at');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
