@@ -40,8 +40,26 @@ export function ClientsTable() {
     return Array.from(set) as string[];
   }, [clients]);
 
+  // Calculate display IDs based on creation order (oldest = 1, newest = highest)
+  const clientsWithDisplayId = useMemo(() => {
+    const sorted = [...clients].sort((a, b) => 
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    return sorted.map((client, index) => ({
+      ...client,
+      displayId: index + 1,
+    }));
+  }, [clients]);
+
+  // Create a map for quick displayId lookup
+  const displayIdMap = useMemo(() => {
+    const map = new Map<string, number>();
+    clientsWithDisplayId.forEach(c => map.set(c.id, c.displayId));
+    return map;
+  }, [clientsWithDisplayId]);
+
   const filteredClients = useMemo(() => {
-    let result = [...clients];
+    let result = [...clientsWithDisplayId];
 
     // Search
     if (searchQuery) {
@@ -51,7 +69,8 @@ export function ClientsTable() {
         c.email?.toLowerCase().includes(query) ||
         c.activity?.toLowerCase().includes(query) ||
         c.phone_mobile?.includes(query) ||
-        c.phone_fixed?.includes(query)
+        c.phone_fixed?.includes(query) ||
+        c.displayId.toString().includes(query)
       );
     }
 
@@ -102,7 +121,7 @@ export function ClientsTable() {
     });
 
     return result;
-  }, [clients, searchQuery, statusFilter, activityFilter, sortField, sortOrder]);
+  }, [clientsWithDisplayId, searchQuery, statusFilter, activityFilter, sortField, sortOrder]);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -224,6 +243,7 @@ export function ClientsTable() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
+              <TableHead className="w-16">ID</TableHead>
               <TableHead className="cursor-pointer" onClick={() => toggleSort('name')}>
                 <div className="flex items-center gap-2">
                   Nom
@@ -253,14 +273,14 @@ export function ClientsTable() {
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 8 }).map((_, j) => (
+                  {Array.from({ length: 9 }).map((_, j) => (
                     <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>
                   ))}
                 </TableRow>
               ))
             ) : filteredClients.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
+                <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
                   {hasActiveFilters ? 'Aucun client ne correspond aux filtres.' : 'Aucun client. Cliquez sur "Ajouter" pour commencer.'}
                 </TableCell>
               </TableRow>
@@ -275,6 +295,7 @@ export function ClientsTable() {
                     className="table-row-hover"
                     onClick={() => handleOpenDetail(client)}
                   >
+                    <TableCell className="font-mono text-muted-foreground">#{client.displayId}</TableCell>
                     <TableCell className="font-medium">{client.name}</TableCell>
                     <TableCell className="text-muted-foreground">{client.activity || '-'}</TableCell>
                     <TableCell>
