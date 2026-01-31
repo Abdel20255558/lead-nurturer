@@ -1,7 +1,8 @@
 import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Users, LogOut, Menu, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, Menu } from 'lucide-react';
+import logoComagal from '@/assets/logo-comagal.png';
 import { useAuth } from '@/hooks/useAuth';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { Button } from '@/components/ui/button';
@@ -25,12 +26,12 @@ export function AppLayout({ children }: AppLayoutProps) {
   const NavContent = () => (
     <>
       <div className="flex items-center gap-3 px-4 py-6">
-        <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
-          <BarChart3 className="h-5 w-5 text-primary-foreground" />
+        <div className="w-10 h-10 rounded-xl overflow-hidden bg-white flex items-center justify-center">
+          <img src={logoComagal} alt="COMAGAL ENERGY" className="w-9 h-9 object-contain" />
         </div>
         <div>
-          <h1 className="font-bold text-sidebar-foreground">ProspectCRM</h1>
-          <p className="text-xs text-sidebar-foreground/60">Gestion de prospection</p>
+          <h1 className="font-bold text-sidebar-foreground">COMAGAL ENERGY</h1>
+          <p className="text-xs text-sidebar-foreground/60">Gestion des clients</p>
         </div>
       </div>
 
