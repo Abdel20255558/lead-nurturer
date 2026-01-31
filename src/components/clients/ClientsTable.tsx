@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Search, Filter, Plus, MoreHorizontal, Phone, Mail, Globe, ArrowUpDown, X, Trash2, Edit, Eye, Upload } from 'lucide-react';
+import { Search, Filter, Plus, MoreHorizontal, Phone, Mail, Globe, ArrowUpDown, X, Trash2, Edit, Eye, Upload, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { useClients } from '@/hooks/useClients';
 import { Client, ClientStatus, STATUS_LABELS, CONTACT_METHOD_LABELS } from '@/types/database';
 import { Button } from '@/components/ui/button';
@@ -175,6 +176,30 @@ export function ClientsTable() {
 
   const hasActiveFilters = searchQuery || statusFilter !== 'all' || activityFilter;
 
+  const handleExportExcel = () => {
+    const exportData = filteredClients.map(client => ({
+      'ID': `#${client.displayId}`,
+      'Nom': client.name,
+      'Activité': client.activity || '',
+      'Téléphone fixe': client.phone_fixed || '',
+      'Email': client.email || '',
+      'Site web': client.website || '',
+      'Statut': STATUS_LABELS[client.status],
+      'Méthode de contact': client.contact_method ? CONTACT_METHOD_LABELS[client.contact_method] : '',
+      'Dernière action': client.last_action_at ? format(new Date(client.last_action_at), 'dd/MM/yyyy', { locale: fr }) : '',
+      'Prochaine relance': client.next_follow_up_at ? format(new Date(client.next_follow_up_at), 'dd/MM/yyyy', { locale: fr }) : '',
+      'Adresse': client.address || '',
+      'Notes': client.notes || '',
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Clients');
+    
+    const fileName = `clients_export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    toast.success(`${filteredClients.length} client(s) exporté(s)`);
+  };
   return (
     <div className="space-y-4">
       {/* Toolbar */}
@@ -229,6 +254,10 @@ export function ClientsTable() {
         </div>
 
         <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportExcel} disabled={filteredClients.length === 0}>
+            <Download className="h-4 w-4 mr-2" />
+            Exporter
+          </Button>
           <Button variant="outline" onClick={() => setIsImportOpen(true)}>
             <Upload className="h-4 w-4 mr-2" />
             Importer
