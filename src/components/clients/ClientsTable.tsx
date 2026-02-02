@@ -137,6 +137,7 @@ export function ClientsTable() {
 
   const getStatusBadge = (status: ClientStatus) => {
     const variants: Record<ClientStatus, string> = {
+      not_prepared: 'bg-orange-500/10 text-orange-600',
       not_contacted: 'bg-muted text-muted-foreground',
       in_progress: 'bg-primary/10 text-primary',
       rejected: 'bg-destructive/10 text-destructive',

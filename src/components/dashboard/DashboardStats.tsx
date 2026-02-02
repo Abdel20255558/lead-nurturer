@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Users, Clock, Check, X, Bell } from 'lucide-react';
+import { Users, Clock, Check, X, Bell, FileWarning, Phone } from 'lucide-react';
 import { useClients } from '@/hooks/useClients';
 import { useAlerts } from '@/hooks/useAlerts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,9 +17,16 @@ export function DashboardStats() {
       bgColor: 'bg-primary/10',
     },
     {
+      label: 'Pas encore préparé',
+      value: clients.filter(c => c.status === 'not_prepared').length,
+      icon: FileWarning,
+      color: 'text-orange-500',
+      bgColor: 'bg-orange-500/10',
+    },
+    {
       label: 'Pas encore contactés',
       value: clients.filter(c => c.status === 'not_contacted').length,
-      icon: Clock,
+      icon: Phone,
       color: 'text-muted-foreground',
       bgColor: 'bg-muted',
     },
@@ -48,7 +55,7 @@ export function DashboardStats() {
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
       {stats.map((stat, index) => (
         <motion.div
           key={stat.label}

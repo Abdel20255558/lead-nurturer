@@ -44,10 +44,17 @@ export function useClients() {
     mutationFn: async (data: ClientFormData) => {
       if (!user) throw new Error('Not authenticated');
       
+      // Déterminer automatiquement le statut basé sur le téléphone
+      let status = data.status;
+      if (status === 'not_contacted' && (!data.phone_fixed || data.phone_fixed === '') && (!data.phone_mobile || data.phone_mobile === '')) {
+        status = 'not_prepared' as ClientStatus;
+      }
+      
       const { data: newClient, error } = await supabase
         .from('clients')
         .insert({
           ...data,
+          status,
           user_id: user.id,
         })
         .select()
