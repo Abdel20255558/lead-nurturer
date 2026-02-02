@@ -259,6 +259,59 @@ export type Database = {
         }
         Relationships: []
       }
+      trips: {
+        Row: {
+          company_name: string
+          created_at: string
+          delivery_date: string
+          driver: Database["public"]["Enums"]["driver_type"]
+          id: string
+          notes: string | null
+          postponed_date: string | null
+          product: string
+          status: Database["public"]["Enums"]["delivery_status"]
+          truck: Database["public"]["Enums"]["truck_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_name: string
+          created_at?: string
+          delivery_date: string
+          driver: Database["public"]["Enums"]["driver_type"]
+          id?: string
+          notes?: string | null
+          postponed_date?: string | null
+          product: string
+          status?: Database["public"]["Enums"]["delivery_status"]
+          truck: Database["public"]["Enums"]["truck_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_name?: string
+          created_at?: string
+          delivery_date?: string
+          driver?: Database["public"]["Enums"]["driver_type"]
+          id?: string
+          notes?: string | null
+          postponed_date?: string | null
+          product?: string
+          status?: Database["public"]["Enums"]["delivery_status"]
+          truck?: Database["public"]["Enums"]["truck_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trips_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -275,7 +328,10 @@ export type Database = {
       company_type: "SA" | "Non SA"
       contact_method: "email" | "reels"
       contact_result: "pending" | "interested" | "not_interested"
+      delivery_status: "pending" | "delivered" | "postponed" | "cancelled"
+      driver_type: "M. Jalale" | "M. Dawi"
       interaction_type: "call" | "email" | "reels" | "visit" | "other"
+      truck_type: "SOLO 1" | "SOLO 2" | "Renault" | "Man"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -412,7 +468,10 @@ export const Constants = {
       company_type: ["SA", "Non SA"],
       contact_method: ["email", "reels"],
       contact_result: ["pending", "interested", "not_interested"],
+      delivery_status: ["pending", "delivered", "postponed", "cancelled"],
+      driver_type: ["M. Jalale", "M. Dawi"],
       interaction_type: ["call", "email", "reels", "visit", "other"],
+      truck_type: ["SOLO 1", "SOLO 2", "Renault", "Man"],
     },
   },
 } as const

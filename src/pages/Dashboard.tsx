@@ -1,5 +1,6 @@
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { TodayAlerts } from '@/components/dashboard/TodayAlerts';
+import { TripAlerts } from '@/components/dashboard/TripAlerts';
 import { AppLayout } from '@/components/layout/AppLayout';
 
 export default function Dashboard() {
@@ -15,6 +16,7 @@ export default function Dashboard() {
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <TodayAlerts />
+          <TripAlerts />
         </div>
       </div>
     </AppLayout>
