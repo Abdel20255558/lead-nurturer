@@ -267,7 +267,11 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      client_status: "not_contacted" | "in_progress" | "rejected"
+      client_status:
+        | "not_prepared"
+        | "not_contacted"
+        | "in_progress"
+        | "rejected"
       company_type: "SA" | "Non SA"
       contact_method: "email" | "reels"
       contact_result: "pending" | "interested" | "not_interested"
@@ -399,7 +403,12 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      client_status: ["not_contacted", "in_progress", "rejected"],
+      client_status: [
+        "not_prepared",
+        "not_contacted",
+        "in_progress",
+        "rejected",
+      ],
       company_type: ["SA", "Non SA"],
       contact_method: ["email", "reels"],
       contact_result: ["pending", "interested", "not_interested"],
