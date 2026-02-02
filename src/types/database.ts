@@ -1,4 +1,4 @@
-export type ClientStatus = 'not_contacted' | 'in_progress' | 'rejected';
+export type ClientStatus = 'not_prepared' | 'not_contacted' | 'in_progress' | 'rejected';
 export type CompanyType = 'SA' | 'Non SA';
 export type ContactMethod = 'email' | 'reels';
 export type ContactResult = 'pending' | 'interested' | 'not_interested';
@@ -70,6 +70,7 @@ export interface Profile {
 
 // Status display helpers
 export const STATUS_LABELS: Record<ClientStatus, string> = {
+  not_prepared: 'Pas encore préparé',
   not_contacted: 'Pas encore contacté',
   in_progress: 'En cours',
   rejected: 'Rejeté',

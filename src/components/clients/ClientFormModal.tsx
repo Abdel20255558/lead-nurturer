@@ -23,7 +23,7 @@ const clientSchema = z.object({
   phone_fixed: z.string().optional(),
   phone_mobile: z.string().optional(),
   company_type: z.enum(['SA', 'Non SA']).optional(),
-  status: z.enum(['not_contacted', 'in_progress', 'rejected']),
+  status: z.enum(['not_prepared', 'not_contacted', 'in_progress', 'rejected']),
   notes: z.string().optional(),
   contact_method: z.enum(['email', 'reels']).optional(),
   offer_sent_date: z.string().optional(),
@@ -61,7 +61,7 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
       };
     }
     return {
-      status: 'not_contacted',
+      status: 'not_prepared',
     };
   };
 
