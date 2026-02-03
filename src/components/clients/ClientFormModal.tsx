@@ -65,7 +65,7 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
     };
   };
 
-  const { register, handleSubmit, watch, setValue, formState: { errors }, reset } = useForm<ClientFormData>({
+  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting }, reset } = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
     defaultValues: getDefaultValues(),
   });
@@ -81,6 +81,16 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
 
   const status = watch('status');
   const contactResult = watch('contact_result');
+  const phoneFixed = watch('phone_fixed');
+  const phoneMobile = watch('phone_mobile');
+
+  // Changer automatiquement le statut en "not_contacted" si un téléphone est saisi et le statut est "not_prepared"
+  React.useEffect(() => {
+    const hasPhone = (phoneFixed && phoneFixed.trim() !== '') || (phoneMobile && phoneMobile.trim() !== '');
+    if (hasPhone && status === 'not_prepared') {
+      setValue('status', 'not_contacted');
+    }
+  }, [phoneFixed, phoneMobile, status, setValue]);
 
   const handleClose = () => {
     reset();
@@ -303,8 +313,13 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
             <Button type="button" variant="outline" onClick={handleClose}>
               Annuler
             </Button>
-            <Button type="submit" disabled={createClient.isPending || updateClient.isPending}>
-              {isEditing ? 'Mettre à jour' : 'Créer le client'}
+            <Button 
+              type="submit" 
+              disabled={isSubmitting || createClient.isPending || updateClient.isPending}
+            >
+              {(isSubmitting || createClient.isPending || updateClient.isPending) 
+                ? 'Enregistrement...' 
+                : (isEditing ? 'Mettre à jour' : 'Créer le client')}
             </Button>
           </div>
         </form>
