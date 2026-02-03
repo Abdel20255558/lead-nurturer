@@ -18,16 +18,22 @@ const clientSchema = z.object({
   name: z.string().min(1, 'Nom obligatoire'),
   address: z.string().optional(),
   activity: z.string().optional(),
-  email: z.string().email('Email invalide').optional().or(z.literal('')),
-  website: z.string().url('URL invalide').optional().or(z.literal('')),
+  email: z.preprocess(
+    (val) => (val === '' ? undefined : val),
+    z.string().email('Email invalide').optional()
+  ),
+  website: z.preprocess(
+    (val) => (val === '' ? undefined : val),
+    z.string().url('URL invalide').optional()
+  ),
   phone_fixed: z.string().optional(),
   phone_mobile: z.string().optional(),
-  company_type: z.enum(['SA', 'Non SA']).optional(),
+  company_type: z.enum(['SA', 'Non SA']).optional().nullable(),
   status: z.enum(['not_prepared', 'not_contacted', 'in_progress', 'rejected']),
   notes: z.string().optional(),
-  contact_method: z.enum(['email', 'reels']).optional(),
+  contact_method: z.enum(['email', 'reels']).optional().nullable(),
   offer_sent_date: z.string().optional(),
-  contact_result: z.enum(['pending', 'interested', 'not_interested']).optional(),
+  contact_result: z.enum(['pending', 'interested', 'not_interested']).optional().nullable(),
 });
 
 type ClientFormData = z.infer<typeof clientSchema>;
@@ -98,6 +104,7 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
   };
 
   const onSubmit = async (formData: ClientFormData) => {
+    console.log('Form submitted with data:', formData);
     const data = { ...formData };
     
     // Si le résultat est "pas intéressé", passer automatiquement en rejeté
@@ -112,31 +119,43 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
       data.contact_result = undefined;
     }
 
+    // Nettoyer les valeurs vides
+    const cleanedData = {
+      name: data.name,
+      status: data.status,
+      address: data.address || undefined,
+      activity: data.activity || undefined,
+      email: data.email || undefined,
+      website: data.website || undefined,
+      phone_fixed: data.phone_fixed || undefined,
+      phone_mobile: data.phone_mobile || undefined,
+      company_type: data.company_type || undefined,
+      notes: data.notes || undefined,
+      contact_method: data.contact_method || undefined,
+      offer_sent_date: data.offer_sent_date || undefined,
+      contact_result: data.contact_result || undefined,
+    };
+
     try {
       if (isEditing && client) {
-        await updateClient.mutateAsync({ id: client.id, data });
+        console.log('Updating client:', client.id, cleanedData);
+        await updateClient.mutateAsync({ id: client.id, data: cleanedData });
       } else {
-        await createClient.mutateAsync({
-          name: data.name,
-          status: data.status,
-          address: data.address,
-          activity: data.activity,
-          email: data.email,
-          website: data.website,
-          phone_fixed: data.phone_fixed,
-          phone_mobile: data.phone_mobile,
-          company_type: data.company_type,
-          notes: data.notes,
-          contact_method: data.contact_method,
-          offer_sent_date: data.offer_sent_date,
-          contact_result: data.contact_result,
-        });
+        console.log('Creating new client:', cleanedData);
+        await createClient.mutateAsync(cleanedData);
       }
       handleClose();
     } catch (error) {
-      console.error(error);
+      console.error('Error saving client:', error);
     }
   };
+
+  // Log validation errors
+  React.useEffect(() => {
+    if (Object.keys(errors).length > 0) {
+      console.log('Form validation errors:', errors);
+    }
+  }, [errors]);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
