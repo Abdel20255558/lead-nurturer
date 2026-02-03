@@ -90,13 +90,12 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
   const phoneFixed = watch('phone_fixed');
   const phoneMobile = watch('phone_mobile');
 
-  // Changer automatiquement le statut en "not_contacted" si un téléphone est saisi et le statut est "not_prepared"
-  React.useEffect(() => {
-    const hasPhone = (phoneFixed && phoneFixed.trim() !== '') || (phoneMobile && phoneMobile.trim() !== '');
-    if (hasPhone && status === 'not_prepared') {
-      setValue('status', 'not_contacted');
-    }
-  }, [phoneFixed, phoneMobile, status, setValue]);
+  // Fonction pour vérifier si un numéro de téléphone est valide (contient au moins 8 chiffres)
+  const isValidPhoneNumber = (phone: string | undefined): boolean => {
+    if (!phone) return false;
+    const digitsOnly = phone.replace(/\D/g, '');
+    return digitsOnly.length >= 8;
+  };
 
   const handleClose = () => {
     reset();
@@ -106,6 +105,18 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
   const onSubmit = async (formData: ClientFormData) => {
     console.log('Form submitted with data:', formData);
     const data = { ...formData };
+    
+    // Vérifier si le téléphone fixe contient un numéro valide
+    const hasValidPhone = isValidPhoneNumber(data.phone_fixed);
+    
+    // Déterminer le statut basé sur le téléphone fixe (sauf si déjà en cours ou rejeté)
+    if (data.status !== 'in_progress' && data.status !== 'rejected') {
+      if (hasValidPhone) {
+        data.status = 'not_contacted';
+      } else {
+        data.status = 'not_prepared';
+      }
+    }
     
     // Si le résultat est "pas intéressé", passer automatiquement en rejeté
     if (data.contact_result === 'not_interested') {
