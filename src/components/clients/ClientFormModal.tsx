@@ -73,9 +73,11 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
   // Reset form when client changes (for edit mode)
   React.useEffect(() => {
     if (isOpen) {
-      reset(getDefaultValues());
+      const values = getDefaultValues();
+      reset(values);
     }
-  }, [isOpen, client?.id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, client]);
 
   const status = watch('status');
   const contactResult = watch('contact_result');

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -36,14 +37,7 @@ export function TripFormModal({ open, onOpenChange, trip }: TripFormModalProps) 
   
   const form = useForm<TripFormData>({
     resolver: zodResolver(tripFormSchema),
-    defaultValues: trip ? {
-      company_name: trip.company_name,
-      product: trip.product,
-      truck: trip.truck,
-      driver: trip.driver,
-      delivery_date: trip.delivery_date,
-      notes: trip.notes || '',
-    } : {
+    defaultValues: {
       company_name: '',
       product: '',
       truck: 'SOLO 1',
@@ -52,6 +46,31 @@ export function TripFormModal({ open, onOpenChange, trip }: TripFormModalProps) 
       notes: '',
     },
   });
+
+  // Reset form when trip changes or modal opens
+  useEffect(() => {
+    if (open) {
+      if (trip) {
+        form.reset({
+          company_name: trip.company_name,
+          product: trip.product,
+          truck: trip.truck,
+          driver: trip.driver,
+          delivery_date: trip.delivery_date,
+          notes: trip.notes || '',
+        });
+      } else {
+        form.reset({
+          company_name: '',
+          product: '',
+          truck: 'SOLO 1',
+          driver: 'M. Jalale',
+          delivery_date: '',
+          notes: '',
+        });
+      }
+    }
+  }, [open, trip, form]);
 
   const onSubmit = async (data: TripFormData) => {
     if (trip) {
