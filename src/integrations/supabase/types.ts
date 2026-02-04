@@ -264,6 +264,7 @@ export type Database = {
           company_name: string
           created_at: string
           delivery_date: string
+          delivery_time: string | null
           driver: Database["public"]["Enums"]["driver_type"]
           id: string
           notes: string | null
@@ -278,6 +279,7 @@ export type Database = {
           company_name: string
           created_at?: string
           delivery_date: string
+          delivery_time?: string | null
           driver: Database["public"]["Enums"]["driver_type"]
           id?: string
           notes?: string | null
@@ -292,6 +294,7 @@ export type Database = {
           company_name?: string
           created_at?: string
           delivery_date?: string
+          delivery_time?: string | null
           driver?: Database["public"]["Enums"]["driver_type"]
           id?: string
           notes?: string | null
