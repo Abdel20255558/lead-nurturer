@@ -2,8 +2,10 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Building2 } from 'lucide-react';
+import { X, Building2, CalendarIcon } from 'lucide-react';
 import { useClients } from '@/hooks/useClients';
 import { Client, ClientStatus, CompanyType, ContactMethod, ContactResult, STATUS_LABELS, CONTACT_METHOD_LABELS, CONTACT_RESULT_LABELS, COMPANY_TYPE_OPTIONS } from '@/types/database';
 import { Button } from '@/components/ui/button';
@@ -12,7 +14,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const clientSchema = z.object({
   name: z.string().min(1, 'Nom obligatoire'),
@@ -34,6 +39,7 @@ const clientSchema = z.object({
   contact_method: z.enum(['email', 'reels']).optional().nullable(),
   offer_sent_date: z.string().optional(),
   contact_result: z.enum(['pending', 'interested', 'not_interested']).optional().nullable(),
+  next_follow_up_at: z.date().optional().nullable(),
 });
 
 type ClientFormData = z.infer<typeof clientSchema>;
@@ -64,10 +70,12 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
         contact_method: client.contact_method,
         offer_sent_date: client.offer_sent_date || '',
         contact_result: client.contact_result,
+        next_follow_up_at: client.next_follow_up_at ? new Date(client.next_follow_up_at) : null,
       };
     }
     return {
       status: 'not_prepared',
+      next_follow_up_at: null,
     };
   };
 
@@ -89,6 +97,7 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
   const contactResult = watch('contact_result');
   const phoneFixed = watch('phone_fixed');
   const phoneMobile = watch('phone_mobile');
+  const nextFollowUpAt = watch('next_follow_up_at');
 
   // Fonction pour vérifier si un numéro de téléphone est valide (contient au moins 8 chiffres)
   const isValidPhoneNumber = (phone: string | undefined): boolean => {
@@ -145,6 +154,7 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
       contact_method: data.contact_method || undefined,
       offer_sent_date: data.offer_sent_date || undefined,
       contact_result: data.contact_result || undefined,
+      next_follow_up_at: data.next_follow_up_at ? data.next_follow_up_at.toISOString() : undefined,
     };
 
     try {
@@ -259,6 +269,46 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Prochaine relance */}
+            <div className="space-y-2">
+              <Label>Prochaine relance</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !nextFollowUpAt && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {nextFollowUpAt ? format(nextFollowUpAt, "dd MMM yyyy", { locale: fr }) : <span>Sélectionner une date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={nextFollowUpAt || undefined}
+                    onSelect={(date) => setValue('next_follow_up_at', date || null)}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                    locale={fr}
+                  />
+                </PopoverContent>
+              </Popover>
+              {nextFollowUpAt && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-muted-foreground"
+                  onClick={() => setValue('next_follow_up_at', null)}
+                >
+                  Supprimer la date
+                </Button>
+              )}
             </div>
 
             {/* Notes */}
