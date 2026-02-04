@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { CalendarIcon, Truck } from 'lucide-react';
+import { CalendarIcon, Truck, Clock } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { useTrips, TripFormData } from '@/hooks/useTrips';
-import { Trip, TRUCK_OPTIONS, DRIVER_OPTIONS, TRUCK_LABELS } from '@/types/trips';
+import { Trip, TRUCK_OPTIONS, DRIVER_OPTIONS, TRUCK_LABELS, DELIVERY_TIME_OPTIONS, DELIVERY_TIME_LABELS, DeliveryTimeSlot } from '@/types/trips';
 
 const tripFormSchema = z.object({
   company_name: z.string().min(1, 'Le nom de la société est requis'),
@@ -23,6 +23,8 @@ const tripFormSchema = z.object({
   truck: z.enum(['SOLO 1', 'SOLO 2', 'Renault', 'Man']),
   driver: z.enum(['M. Jalale', 'M. Dawi']),
   delivery_date: z.string().min(1, 'La date de livraison est requise'),
+  delivery_time_slot: z.enum(['matin', 'apres_midi', 'heure_precise']).optional(),
+  delivery_time_precise: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -32,10 +34,30 @@ interface TripFormModalProps {
   trip?: Trip;
 }
 
+// Helper to parse delivery_time from DB
+const parseDeliveryTime = (deliveryTime?: string): { slot?: DeliveryTimeSlot; precise?: string } => {
+  if (!deliveryTime) return {};
+  if (deliveryTime === 'matin' || deliveryTime === 'apres_midi') {
+    return { slot: deliveryTime };
+  }
+  // It's a specific time (HH:MM format)
+  return { slot: 'heure_precise', precise: deliveryTime };
+};
+
+// Helper to format delivery_time for DB
+const formatDeliveryTime = (slot?: DeliveryTimeSlot, precise?: string): string | undefined => {
+  if (!slot) return undefined;
+  if (slot === 'heure_precise' && precise) return precise;
+  if (slot === 'matin' || slot === 'apres_midi') return slot;
+  return undefined;
+};
+
 export function TripFormModal({ open, onOpenChange, trip }: TripFormModalProps) {
   const { createTrip, updateTrip } = useTrips();
   
-  const form = useForm<TripFormData>({
+  const parsedTime = trip ? parseDeliveryTime(trip.delivery_time) : {};
+  
+  const form = useForm<z.infer<typeof tripFormSchema>>({
     resolver: zodResolver(tripFormSchema),
     defaultValues: {
       company_name: '',
@@ -43,6 +65,8 @@ export function TripFormModal({ open, onOpenChange, trip }: TripFormModalProps) 
       truck: 'SOLO 1',
       driver: 'M. Jalale',
       delivery_date: '',
+      delivery_time_slot: undefined,
+      delivery_time_precise: '',
       notes: '',
     },
   });
@@ -51,12 +75,15 @@ export function TripFormModal({ open, onOpenChange, trip }: TripFormModalProps) 
   useEffect(() => {
     if (open) {
       if (trip) {
+        const parsed = parseDeliveryTime(trip.delivery_time);
         form.reset({
           company_name: trip.company_name,
           product: trip.product,
           truck: trip.truck,
           driver: trip.driver,
           delivery_date: trip.delivery_date,
+          delivery_time_slot: parsed.slot,
+          delivery_time_precise: parsed.precise || '',
           notes: trip.notes || '',
         });
       } else {
@@ -66,17 +93,33 @@ export function TripFormModal({ open, onOpenChange, trip }: TripFormModalProps) 
           truck: 'SOLO 1',
           driver: 'M. Jalale',
           delivery_date: '',
+          delivery_time_slot: undefined,
+          delivery_time_precise: '',
           notes: '',
         });
       }
     }
   }, [open, trip, form]);
 
-  const onSubmit = async (data: TripFormData) => {
+  const deliveryTimeSlot = form.watch('delivery_time_slot');
+
+  const onSubmit = async (data: z.infer<typeof tripFormSchema>) => {
+    const deliveryTime = formatDeliveryTime(data.delivery_time_slot, data.delivery_time_precise);
+    
+    const tripData = {
+      company_name: data.company_name,
+      product: data.product,
+      truck: data.truck,
+      driver: data.driver,
+      delivery_date: data.delivery_date,
+      delivery_time: deliveryTime,
+      notes: data.notes,
+    };
+
     if (trip) {
-      await updateTrip.mutateAsync({ id: trip.id, ...data });
+      await updateTrip.mutateAsync({ id: trip.id, ...tripData });
     } else {
-      await createTrip.mutateAsync(data);
+      await createTrip.mutateAsync(tripData);
     }
     form.reset();
     onOpenChange(false);
@@ -213,6 +256,53 @@ export function TripFormModal({ open, onOpenChange, trip }: TripFormModalProps) 
                 </FormItem>
               )}
             />
+
+            {/* Heure de livraison */}
+            <div className="space-y-3">
+              <FormField
+                control={form.control}
+                name="delivery_time_slot"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      Heure de livraison
+                    </FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choisir le moment" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {DELIVERY_TIME_OPTIONS.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {DELIVERY_TIME_LABELS[option]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {deliveryTimeSlot === 'heure_precise' && (
+                <FormField
+                  control={form.control}
+                  name="delivery_time_precise"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Heure précise</FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
 
             <FormField
               control={form.control}

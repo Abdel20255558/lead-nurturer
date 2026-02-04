@@ -11,6 +11,7 @@ export interface TripFormData {
   truck: TruckType;
   driver: DriverType;
   delivery_date: string;
+  delivery_time?: string;
   notes?: string;
 }
 

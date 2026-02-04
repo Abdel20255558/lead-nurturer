@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useTrips } from '@/hooks/useTrips';
-import { Trip, DeliveryStatus, DELIVERY_STATUS_LABELS, TRUCK_LABELS } from '@/types/trips';
+import { Trip, DeliveryStatus, DELIVERY_STATUS_LABELS, TRUCK_LABELS, DELIVERY_TIME_LABELS, DeliveryTimeSlot } from '@/types/trips';
 import { TripFormModal } from './TripFormModal';
 import { TripStatusModal } from './TripStatusModal';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -68,6 +68,14 @@ export function TripsTable() {
     );
   };
 
+  const getDeliveryTimeLabel = (deliveryTime?: string) => {
+    if (!deliveryTime) return '-';
+    if (deliveryTime === 'matin') return 'Matin';
+    if (deliveryTime === 'apres_midi') return 'Après-midi';
+    // It's a specific time (HH:MM format)
+    return deliveryTime;
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -109,6 +117,7 @@ export function TripsTable() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date livraison</TableHead>
+                    <TableHead>Heure</TableHead>
                     <TableHead>Société</TableHead>
                     <TableHead>Produit</TableHead>
                     <TableHead>Camion</TableHead>
@@ -125,6 +134,9 @@ export function TripsTable() {
                           {format(parseISO(trip.delivery_date), 'dd/MM/yyyy', { locale: fr })}
                           {getDateBadge(trip)}
                         </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {getDeliveryTimeLabel(trip.delivery_time)}
                       </TableCell>
                       <TableCell className="font-medium">{trip.company_name}</TableCell>
                       <TableCell>{trip.product}</TableCell>
