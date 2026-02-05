@@ -8,6 +8,7 @@ import { AuthPage } from "@/components/auth/AuthPage";
 import Dashboard from "@/pages/Dashboard";
 import ClientsPage from "@/pages/Clients";
 import TripsPage from "@/pages/Trips";
+import HRPage from "@/pages/HR";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -81,6 +82,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <TripsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/hr"
+        element={
+          <ProtectedRoute>
+            <HRPage />
           </ProtectedRoute>
         }
       />

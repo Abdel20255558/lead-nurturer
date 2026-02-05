@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Users, LogOut, Menu, Truck } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, Menu, Truck, UserCheck } from 'lucide-react';
 import logoComagal from '@/assets/logo-comagal.png';
 import { useAuth } from '@/hooks/useAuth';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
@@ -17,6 +17,7 @@ const navItems = [
   { label: 'Dashboard', path: '/', icon: LayoutDashboard },
   { label: 'Clients', path: '/clients', icon: Users },
   { label: 'Voyages', path: '/trips', icon: Truck },
+  { label: 'RH & Paie', path: '/hr', icon: UserCheck },
 ];
 
 export function AppLayout({ children }: AppLayoutProps) {
