@@ -65,6 +65,41 @@ export type Database = {
           },
         ]
       }
+      attendance: {
+        Row: {
+          created_at: string
+          date: string
+          employee_id: string
+          id: string
+          status: Database["public"]["Enums"]["attendance_status"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          employee_id: string
+          id?: string
+          status?: Database["public"]["Enums"]["attendance_status"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          employee_id?: string
+          id?: string
+          status?: Database["public"]["Enums"]["attendance_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           activity: string | null
@@ -144,6 +179,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      employees: {
+        Row: {
+          created_at: string
+          daily_rate: number
+          full_name: string
+          id: string
+          is_active: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_rate: number
+          full_name: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          daily_rate?: number
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       interactions: {
         Row: {
@@ -238,6 +303,33 @@ export type Database = {
           },
         ]
       }
+      payroll_settings: {
+        Row: {
+          created_at: string
+          holidays_are_paid: boolean
+          id: string
+          paid_leave_is_paid: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          holidays_are_paid?: boolean
+          id?: string
+          paid_leave_is_paid?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          holidays_are_paid?: boolean
+          id?: string
+          paid_leave_is_paid?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -326,6 +418,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      attendance_status: "P" | "A" | "SL" | "UL" | "PL" | "H"
       client_status:
         | "not_prepared"
         | "not_contacted"
@@ -465,6 +558,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      attendance_status: ["P", "A", "SL", "UL", "PL", "H"],
       client_status: [
         "not_prepared",
         "not_contacted",
