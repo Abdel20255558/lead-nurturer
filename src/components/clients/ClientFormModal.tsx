@@ -32,6 +32,7 @@ const clientSchema = z.object({
     z.string().url('URL invalide').optional()
   ),
   phone_fixed: z.string().optional(),
+  phone_fixed_2: z.string().optional(),
   phone_mobile: z.string().optional(),
   company_type: z.enum(['SA', 'Non SA']).optional().nullable(),
   status: z.enum(['not_prepared', 'not_contacted', 'in_progress', 'rejected']),
@@ -63,6 +64,7 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
         email: client.email || '',
         website: client.website || '',
         phone_fixed: client.phone_fixed || '',
+        phone_fixed_2: client.phone_fixed_2 || '',
         phone_mobile: client.phone_mobile || '',
         company_type: client.company_type,
         status: client.status,
@@ -148,6 +150,7 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
       email: data.email || undefined,
       website: data.website || undefined,
       phone_fixed: data.phone_fixed || undefined,
+      phone_fixed_2: data.phone_fixed_2 || undefined,
       phone_mobile: data.phone_mobile || undefined,
       company_type: data.company_type || undefined,
       notes: data.notes || undefined,
@@ -243,8 +246,14 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
 
             {/* Téléphone fixe */}
             <div className="space-y-2">
-              <Label htmlFor="phone_fixed">Téléphone fixe</Label>
+              <Label htmlFor="phone_fixed">Téléphone fixe 1</Label>
               <Input id="phone_fixed" {...register('phone_fixed')} placeholder="+212 5XX XXX XXX" />
+            </div>
+
+            {/* Téléphone fixe 2 */}
+            <div className="space-y-2">
+              <Label htmlFor="phone_fixed_2">Téléphone fixe 2</Label>
+              <Input id="phone_fixed_2" {...register('phone_fixed_2')} placeholder="+212 5XX XXX XXX" />
             </div>
 
             {/* Téléphone mobile */}

@@ -11,6 +11,7 @@ interface ClientFormData {
   email?: string;
   website?: string;
   phone_fixed?: string;
+  phone_fixed_2?: string;
   phone_mobile?: string;
   company_type?: CompanyType;
   status: ClientStatus;

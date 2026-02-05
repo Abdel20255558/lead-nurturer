@@ -82,6 +82,7 @@ export type Database = {
           notes: string | null
           offer_sent_date: string | null
           phone_fixed: string | null
+          phone_fixed_2: string | null
           phone_mobile: string | null
           status: Database["public"]["Enums"]["client_status"]
           updated_at: string
@@ -104,6 +105,7 @@ export type Database = {
           notes?: string | null
           offer_sent_date?: string | null
           phone_fixed?: string | null
+          phone_fixed_2?: string | null
           phone_mobile?: string | null
           status?: Database["public"]["Enums"]["client_status"]
           updated_at?: string
@@ -126,6 +128,7 @@ export type Database = {
           notes?: string | null
           offer_sent_date?: string | null
           phone_fixed?: string | null
+          phone_fixed_2?: string | null
           phone_mobile?: string | null
           status?: Database["public"]["Enums"]["client_status"]
           updated_at?: string
