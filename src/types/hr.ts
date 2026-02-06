@@ -6,6 +6,8 @@ export interface Employee {
   full_name: string;
   daily_rate: number;
   is_active: boolean;
+  job_title: string | null;
+  start_date: string | null;
   created_at: string;
   updated_at: string;
 }

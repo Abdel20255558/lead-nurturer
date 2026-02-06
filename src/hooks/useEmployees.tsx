@@ -8,6 +8,8 @@ export interface EmployeeFormData {
   full_name: string;
   daily_rate: number;
   is_active?: boolean;
+  job_title?: string;
+  start_date?: string;
 }
 
 export const useEmployees = () => {
@@ -35,6 +37,8 @@ export const useEmployees = () => {
       if (!user) throw new Error('User not authenticated');
       const { error } = await supabase.from('employees').insert({
         ...data,
+        job_title: data.job_title || null,
+        start_date: data.start_date || null,
         user_id: user.id,
       });
       if (error) throw error;
