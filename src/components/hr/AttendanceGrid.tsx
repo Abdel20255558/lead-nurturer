@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { format, eachDayOfInterval, parseISO, startOfMonth, endOfMonth } from 'date-fns';
+import { format, eachDayOfInterval, parseISO, startOfMonth, endOfMonth, isSunday, isAfter, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -87,12 +87,20 @@ export const AttendanceGrid = ({ month }: AttendanceGridProps) => {
             <TableHeader>
               <TableRow>
                 <TableHead className="sticky left-0 bg-background z-10">Employé</TableHead>
-                {days.map(day => (
-                  <TableHead key={day.toISOString()} className="text-center min-w-[60px]">
-                    <div className="text-xs">{format(day, 'EEE', { locale: fr })}</div>
-                    <div>{format(day, 'd')}</div>
-                  </TableHead>
-                ))}
+                {days.map(day => {
+                  const sunday = isSunday(day);
+                  const future = isAfter(startOfDay(day), startOfDay(new Date()));
+                  return (
+                    <TableHead key={day.toISOString()} className={cn(
+                      "text-center min-w-[60px]",
+                      sunday && "bg-muted/50 text-muted-foreground",
+                      future && "opacity-50"
+                    )}>
+                      <div className="text-xs">{format(day, 'EEE', { locale: fr })}</div>
+                      <div>{format(day, 'd')}</div>
+                    </TableHead>
+                  );
+                })}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -103,16 +111,44 @@ export const AttendanceGrid = ({ month }: AttendanceGridProps) => {
                   </TableCell>
                   {days.map(day => {
                     const dateStr = format(day, 'yyyy-MM-dd');
+                    const sunday = isSunday(day);
+                    const future = isAfter(startOfDay(day), startOfDay(new Date()));
                     const status = getStatus(employee.id, dateStr);
+                    
+                    // Dimanche = pas de travail
+                    if (sunday) {
+                      return (
+                        <TableCell key={dateStr} className="p-1 bg-muted/50">
+                          <div className="h-8 w-14 flex items-center justify-center text-xs text-muted-foreground font-medium">
+                            DIM
+                          </div>
+                        </TableCell>
+                      );
+                    }
+                    
+                    // Jour futur = vide, pas de sélection
+                    if (future) {
+                      return (
+                        <TableCell key={dateStr} className="p-1 opacity-40">
+                          <div className="h-8 w-14 flex items-center justify-center text-xs text-muted-foreground">
+                            —
+                          </div>
+                        </TableCell>
+                      );
+                    }
+                    
+                    // Jour passé sans statut = affiché comme P (Présent par défaut)
+                    const displayStatus = status || 'P';
+                    
                     return (
                       <TableCell key={dateStr} className="p-1">
                         <Select
-                          value={status || ''}
+                          value={displayStatus}
                           onValueChange={(value) => setStatus(employee.id, dateStr, value as AttendanceStatus)}
                         >
                           <SelectTrigger className={cn(
                             'h-8 w-14 text-xs font-medium text-white border-0',
-                            status ? ATTENDANCE_STATUS_COLORS[status] : 'bg-muted text-muted-foreground'
+                            ATTENDANCE_STATUS_COLORS[displayStatus as AttendanceStatus]
                           )}>
                             <SelectValue placeholder="-" />
                           </SelectTrigger>
