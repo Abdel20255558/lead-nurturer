@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { format, startOfMonth, endOfMonth, getDaysInMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,11 +23,9 @@ export const PayrollTable = ({ month }: PayrollTableProps) => {
 
   const activeEmployees = employees.filter(e => e.is_active);
   
-  const totalDaysInMonth = getDaysInMonth(month);
-  
   const payrollData = useMemo(() => {
-    return calculatePayroll(activeEmployees, attendance, settings, totalDaysInMonth);
-  }, [activeEmployees, attendance, settings, totalDaysInMonth]);
+    return calculatePayroll(activeEmployees, attendance, settings, month);
+  }, [activeEmployees, attendance, settings, month]);
 
   const grandTotal = payrollData.reduce((sum, p) => sum + p.total_to_pay, 0);
 
@@ -118,8 +116,8 @@ export const PayrollTable = ({ month }: PayrollTableProps) => {
           <Card className="bg-muted/30">
             <CardContent className="pt-4">
               <p className="text-sm text-muted-foreground">
-                <strong>Rappel (Darija):</strong> الأيام المؤداة = P فقط (+ PL و H إلا إذا فعّلتهم). 
-                المرض SL والغياب A ماشي مؤدى.
+                <strong>Rappel (Darija):</strong> غير الأيام اللي فاتو كيتحسبو. الأحد ما كيتحسبش. 
+                اللي ما دخلتي فيه والو = حاضر (P). المرض SL والغياب A ماشي مؤدى.
               </p>
             </CardContent>
           </Card>

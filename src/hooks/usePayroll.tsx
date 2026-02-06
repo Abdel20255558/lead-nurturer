@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { PayrollSettings, AttendanceSummary, PayrollCalculation, Employee, Attendance } from '@/types/hr';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { startOfMonth, endOfMonth, eachDayOfInterval, isSunday, format } from 'date-fns';
 
 export const usePayrollSettings = () => {
   const { user } = useAuth();
@@ -53,25 +54,40 @@ export const calculatePayroll = (
   employees: Employee[],
   attendance: Attendance[],
   settings: PayrollSettings | null,
-  totalDaysInMonth: number
+  month: Date
 ): PayrollCalculation[] => {
   const paidLeaveIsPaid = settings?.paid_leave_is_paid ?? false;
   const holidaysArePaid = settings?.holidays_are_paid ?? false;
 
+  const today = new Date();
+  const monthStart = startOfMonth(month);
+  const monthEnd = endOfMonth(month);
+  
+  // Only count up to today if we're in the current month, otherwise full month
+  const lastDay = today < monthEnd ? today : monthEnd;
+  
+  // Get all workable days (past days, excluding Sundays)
+  const allDays = eachDayOfInterval({ start: monthStart, end: lastDay });
+  const workableDays = allDays.filter(d => !isSunday(d));
+  const workableDayStrings = workableDays.map(d => format(d, 'yyyy-MM-dd'));
+  const totalWorkableDays = workableDays.length;
+
   return employees.map(employee => {
     const employeeAttendance = attendance.filter(a => a.employee_id === employee.id);
     
-    // Jours explicitement marqués avec un statut autre que P
-    const days_A = employeeAttendance.filter(a => a.status === 'A').length;
-    const days_SL = employeeAttendance.filter(a => a.status === 'SL').length;
-    const days_UL = employeeAttendance.filter(a => a.status === 'UL').length;
-    const days_PL = employeeAttendance.filter(a => a.status === 'PL').length;
-    const days_H = employeeAttendance.filter(a => a.status === 'H').length;
-    const explicit_P = employeeAttendance.filter(a => a.status === 'P').length;
+    // Only count attendance for workable days (past, non-Sunday)
+    const relevantAttendance = employeeAttendance.filter(a => workableDayStrings.includes(a.date));
     
-    // Les jours non renseignés comptent comme Présent
-    const daysWithStatus = employeeAttendance.length;
-    const unrecordedDays = Math.max(0, totalDaysInMonth - daysWithStatus);
+    const days_A = relevantAttendance.filter(a => a.status === 'A').length;
+    const days_SL = relevantAttendance.filter(a => a.status === 'SL').length;
+    const days_UL = relevantAttendance.filter(a => a.status === 'UL').length;
+    const days_PL = relevantAttendance.filter(a => a.status === 'PL').length;
+    const days_H = relevantAttendance.filter(a => a.status === 'H').length;
+    const explicit_P = relevantAttendance.filter(a => a.status === 'P').length;
+    
+    // Jours ouvrables passés sans statut = Présent par défaut
+    const daysWithStatus = relevantAttendance.length;
+    const unrecordedDays = Math.max(0, totalWorkableDays - daysWithStatus);
     
     const summary: AttendanceSummary = {
       days_P: explicit_P + unrecordedDays,
