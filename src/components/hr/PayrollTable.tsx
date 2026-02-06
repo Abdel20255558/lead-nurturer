@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, getDaysInMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,9 +23,11 @@ export const PayrollTable = ({ month }: PayrollTableProps) => {
 
   const activeEmployees = employees.filter(e => e.is_active);
   
+  const totalDaysInMonth = getDaysInMonth(month);
+  
   const payrollData = useMemo(() => {
-    return calculatePayroll(activeEmployees, attendance, settings);
-  }, [activeEmployees, attendance, settings]);
+    return calculatePayroll(activeEmployees, attendance, settings, totalDaysInMonth);
+  }, [activeEmployees, attendance, settings, totalDaysInMonth]);
 
   const grandTotal = payrollData.reduce((sum, p) => sum + p.total_to_pay, 0);
 

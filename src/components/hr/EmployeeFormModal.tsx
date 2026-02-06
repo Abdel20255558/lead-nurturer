@@ -19,6 +19,8 @@ export const EmployeeFormModal = ({ open, onOpenChange, employee }: EmployeeForm
     full_name: employee?.full_name || '',
     daily_rate: employee?.daily_rate || 0,
     is_active: employee?.is_active ?? true,
+    job_title: employee?.job_title || '',
+    start_date: employee?.start_date || '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,7 +33,7 @@ export const EmployeeFormModal = ({ open, onOpenChange, employee }: EmployeeForm
     }
     
     onOpenChange(false);
-    setFormData({ full_name: '', daily_rate: 0, is_active: true });
+    setFormData({ full_name: '', daily_rate: 0, is_active: true, job_title: '', start_date: '' });
   };
 
   return (
@@ -42,13 +44,23 @@ export const EmployeeFormModal = ({ open, onOpenChange, employee }: EmployeeForm
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="full_name">Nom complet</Label>
+            <Label htmlFor="full_name">Nom et prénom</Label>
             <Input
               id="full_name"
               value={formData.full_name}
               onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
               placeholder="Mohammed Alami"
               required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="job_title">Métier / Poste</Label>
+            <Input
+              id="job_title"
+              value={formData.job_title || ''}
+              onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
+              placeholder="Chauffeur, Maçon, etc."
             />
           </div>
           
@@ -63,6 +75,16 @@ export const EmployeeFormModal = ({ open, onOpenChange, employee }: EmployeeForm
               onChange={(e) => setFormData({ ...formData, daily_rate: parseFloat(e.target.value) || 0 })}
               placeholder="200"
               required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="start_date">Date de début de travail</Label>
+            <Input
+              id="start_date"
+              type="date"
+              value={formData.start_date || ''}
+              onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
             />
           </div>
 

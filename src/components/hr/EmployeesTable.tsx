@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { format, parseISO } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -57,8 +59,10 @@ export const EmployeesTable = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nom</TableHead>
+              <TableHead>Nom et prénom</TableHead>
+              <TableHead>Métier</TableHead>
               <TableHead>Taux journalier</TableHead>
+              <TableHead>Date de début</TableHead>
               <TableHead>Statut</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -67,7 +71,13 @@ export const EmployeesTable = () => {
             {employees.map((employee) => (
               <TableRow key={employee.id}>
                 <TableCell className="font-medium">{employee.full_name}</TableCell>
+                <TableCell>{employee.job_title || '-'}</TableCell>
                 <TableCell>{employee.daily_rate.toFixed(2)} DH</TableCell>
+                <TableCell>
+                  {employee.start_date 
+                    ? format(parseISO(employee.start_date), 'dd MMM yyyy', { locale: fr })
+                    : '-'}
+                </TableCell>
                 <TableCell>
                   <Badge variant={employee.is_active ? 'default' : 'secondary'}>
                     {employee.is_active ? 'Actif' : 'Inactif'}

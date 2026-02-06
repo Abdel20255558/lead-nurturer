@@ -52,7 +52,8 @@ export const usePayrollSettings = () => {
 export const calculatePayroll = (
   employees: Employee[],
   attendance: Attendance[],
-  settings: PayrollSettings | null
+  settings: PayrollSettings | null,
+  totalDaysInMonth: number
 ): PayrollCalculation[] => {
   const paidLeaveIsPaid = settings?.paid_leave_is_paid ?? false;
   const holidaysArePaid = settings?.holidays_are_paid ?? false;
@@ -60,13 +61,25 @@ export const calculatePayroll = (
   return employees.map(employee => {
     const employeeAttendance = attendance.filter(a => a.employee_id === employee.id);
     
+    // Jours explicitement marqués avec un statut autre que P
+    const days_A = employeeAttendance.filter(a => a.status === 'A').length;
+    const days_SL = employeeAttendance.filter(a => a.status === 'SL').length;
+    const days_UL = employeeAttendance.filter(a => a.status === 'UL').length;
+    const days_PL = employeeAttendance.filter(a => a.status === 'PL').length;
+    const days_H = employeeAttendance.filter(a => a.status === 'H').length;
+    const explicit_P = employeeAttendance.filter(a => a.status === 'P').length;
+    
+    // Les jours non renseignés comptent comme Présent
+    const daysWithStatus = employeeAttendance.length;
+    const unrecordedDays = Math.max(0, totalDaysInMonth - daysWithStatus);
+    
     const summary: AttendanceSummary = {
-      days_P: employeeAttendance.filter(a => a.status === 'P').length,
-      days_A: employeeAttendance.filter(a => a.status === 'A').length,
-      days_SL: employeeAttendance.filter(a => a.status === 'SL').length,
-      days_UL: employeeAttendance.filter(a => a.status === 'UL').length,
-      days_PL: employeeAttendance.filter(a => a.status === 'PL').length,
-      days_H: employeeAttendance.filter(a => a.status === 'H').length,
+      days_P: explicit_P + unrecordedDays,
+      days_A,
+      days_SL,
+      days_UL,
+      days_PL,
+      days_H,
     };
 
     const paid_days = summary.days_P 
