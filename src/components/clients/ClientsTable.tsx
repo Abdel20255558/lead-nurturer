@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format } from 'date-fns';
+import { format, isToday, isTomorrow, isThisWeek, isAfter, startOfDay, endOfWeek, addWeeks, isBefore } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Search, Filter, Plus, MoreHorizontal, Phone, Mail, Globe, ArrowUpDown, X, Trash2, Edit, Eye, Upload, Download } from 'lucide-react';
+import { Search, Filter, Plus, MoreHorizontal, Phone, Mail, Globe, ArrowUpDown, X, Trash2, Edit, Eye, Upload, Download, CalendarIcon } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useClients } from '@/hooks/useClients';
 import { Client, ClientStatus, STATUS_LABELS, CONTACT_METHOD_LABELS } from '@/types/database';
@@ -19,6 +19,7 @@ import { ImportClientsModal } from './ImportClientsModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 type SortField = 'name' | 'created_at' | 'last_action_at' | 'next_follow_up_at';
 type SortOrder = 'asc' | 'desc';
@@ -27,6 +28,7 @@ export function ClientsTable() {
   const { clients, isLoading, deleteClient, markAsRejected } = useClients();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ClientStatus | 'all' | 'to_follow_up'>('all');
+  const [plannedDateFilter, setPlannedDateFilter] = useState<'all' | 'today' | 'this_week' | 'next_week' | 'later' | 'no_date' | 'overdue'>('all');
   const [activityFilter, setActivityFilter] = useState('');
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
@@ -87,6 +89,27 @@ export function ClientsTable() {
       });
     } else if (statusFilter !== 'all') {
       result = result.filter(c => c.status === statusFilter);
+    }
+
+    // Planned date sub-filter (when status = not_contacted)
+    if (statusFilter === 'not_contacted' && plannedDateFilter !== 'all') {
+      const today = startOfDay(new Date());
+      const endOfThisWeek = endOfWeek(new Date(), { weekStartsOn: 1 });
+      const endOfNextWeek = endOfWeek(addWeeks(new Date(), 1), { weekStartsOn: 1 });
+
+      result = result.filter(c => {
+        if (plannedDateFilter === 'no_date') return !c.next_follow_up_at;
+        if (!c.next_follow_up_at) return false;
+        const d = new Date(c.next_follow_up_at);
+        switch (plannedDateFilter) {
+          case 'overdue': return isBefore(d, today);
+          case 'today': return isToday(d);
+          case 'this_week': return isThisWeek(d, { weekStartsOn: 1 }) && !isBefore(d, today);
+          case 'next_week': return isAfter(d, endOfThisWeek) && isBefore(d, endOfNextWeek);
+          case 'later': return isAfter(d, endOfNextWeek);
+          default: return true;
+        }
+      });
     }
 
     // Activity filter
@@ -172,10 +195,28 @@ export function ClientsTable() {
   const clearFilters = () => {
     setSearchQuery('');
     setStatusFilter('all');
+    setPlannedDateFilter('all');
     setActivityFilter('');
   };
 
-  const hasActiveFilters = searchQuery || statusFilter !== 'all' || activityFilter;
+  const hasActiveFilters = searchQuery || statusFilter !== 'all' || activityFilter || plannedDateFilter !== 'all';
+
+  // Count not_contacted clients by planned date category
+  const plannedDateCounts = useMemo(() => {
+    const notContacted = clientsWithDisplayId.filter(c => c.status === 'not_contacted');
+    const today = startOfDay(new Date());
+    const endOfThisWeek = endOfWeek(new Date(), { weekStartsOn: 1 });
+    const endOfNextWeek = endOfWeek(addWeeks(new Date(), 1), { weekStartsOn: 1 });
+    return {
+      all: notContacted.length,
+      overdue: notContacted.filter(c => c.next_follow_up_at && isBefore(new Date(c.next_follow_up_at), today)).length,
+      today: notContacted.filter(c => c.next_follow_up_at && isToday(new Date(c.next_follow_up_at))).length,
+      this_week: notContacted.filter(c => c.next_follow_up_at && isThisWeek(new Date(c.next_follow_up_at), { weekStartsOn: 1 }) && !isBefore(new Date(c.next_follow_up_at), today)).length,
+      next_week: notContacted.filter(c => c.next_follow_up_at && isAfter(new Date(c.next_follow_up_at), endOfThisWeek) && isBefore(new Date(c.next_follow_up_at), endOfNextWeek)).length,
+      later: notContacted.filter(c => c.next_follow_up_at && isAfter(new Date(c.next_follow_up_at), endOfNextWeek)).length,
+      no_date: notContacted.filter(c => !c.next_follow_up_at).length,
+    };
+  }, [clientsWithDisplayId]);
 
   const handleExportExcel = () => {
     const exportData = filteredClients.map(client => ({
@@ -218,7 +259,7 @@ export function ClientsTable() {
           </div>
 
           {/* Status Filter */}
-          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+          <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as any); if (v !== 'not_contacted') setPlannedDateFilter('all'); }}>
             <SelectTrigger className="w-44">
               <SelectValue placeholder="Statut" />
             </SelectTrigger>
@@ -269,6 +310,36 @@ export function ClientsTable() {
           </Button>
         </div>
       </div>
+
+      {/* Sub-filter for planned contact dates when not_contacted is selected */}
+      {statusFilter === 'not_contacted' && (
+        <div className="flex flex-wrap gap-2 items-center">
+          <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground mr-1">Planning :</span>
+          {([
+            { key: 'all', label: 'Tous', color: '' },
+            { key: 'overdue', label: 'En retard', color: 'bg-destructive/10 text-destructive border-destructive/30' },
+            { key: 'today', label: "Aujourd'hui", color: 'bg-yellow-500/10 text-yellow-700 border-yellow-500/30' },
+            { key: 'this_week', label: 'Cette semaine', color: 'bg-blue-500/10 text-blue-700 border-blue-500/30' },
+            { key: 'next_week', label: 'Semaine prochaine', color: 'bg-primary/10 text-primary border-primary/30' },
+            { key: 'later', label: 'Plus tard', color: 'bg-muted text-muted-foreground' },
+            { key: 'no_date', label: 'Sans date', color: 'bg-orange-500/10 text-orange-600 border-orange-500/30' },
+          ] as const).map(({ key, label, color }) => {
+            const count = plannedDateCounts[key];
+            return (
+              <Button
+                key={key}
+                variant={plannedDateFilter === key ? 'default' : 'outline'}
+                size="sm"
+                className={cn("text-xs h-7", plannedDateFilter !== key && color)}
+                onClick={() => setPlannedDateFilter(key)}
+              >
+                {label} {count > 0 && <span className="ml-1 opacity-70">({count})</span>}
+              </Button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Table */}
       <div className="rounded-lg border bg-card overflow-hidden">
